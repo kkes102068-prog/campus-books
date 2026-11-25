@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#cdd9e2">
+  <title>北護校園二手書</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+  <div class="sky" aria-hidden="true"><i></i><i></i><i></i></div>
+
+  <!-- 頂部列 -->
+  <header class="topbar">
+    <div class="max-w-6xl mx-auto px-3 sm:px-5 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3">
+      <a href="./" class="logo" aria-label="北護校園二手書">
+        <span class="logo-mark"><img class="mascot" src="school-emblem.png" alt="北護" width="44" height="44"></span>
+        <span class="logo-text">北護校園二手書</span>
+      </a>
+      <div class="ml-auto flex items-center gap-2">
+        <button id="btn-bell" class="hidden btn btn-ghost !p-2.5 bell" aria-label="通知中心" title="通知中心">🔔<span id="bell-badge" class="badge hidden"></span></button>
+        <button data-refresh class="btn btn-ghost !p-2.5" aria-label="重新整理" title="重新整理"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+        <a id="link-admin" href="admin.html" class="hidden btn btn-ghost btn-sm">⚙️ 後台</a>
+        <button id="btn-sell" class="hidden sm:inline-flex btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> 我要賣書
+        </button>
+        <button id="btn-login" class="btn btn-line">LINE 登入</button>
+        <button id="btn-me" class="hidden btn btn-ghost !p-1 !pr-3 items-center gap-2">
+          <img id="me-avatar" alt="" class="avatar" style="width:30px;height:30px">
+          <span id="me-name" class="text-sm max-w-[6rem] truncate"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-3 sm:px-5 pt-4 sm:pt-6 pb-8">
+    <div id="ann-banner"></div>
+    <div id="install-card"></div>
+    <div id="demo-banner" class="hidden mb-4 rounded-2xl px-4 py-3 text-sm font-medium" style="background:color-mix(in srgb,#d9a45f 16%,var(--surface));color:#9a7048">
+      目前為<strong>示範模式</strong>(尚未設定 Supabase):「LINE 登入」會以示範帳號登入,資料只存在你的瀏覽器,賣家會自動回覆。
+    </div>
+
+    <!-- Hero + 搜尋(二手書 / 許願池 頁籤顯示)-->
+    <section id="search-wrap" class="hero">
+      <div class="flex flex-wrap gap-2 mb-3">
+        <span class="hero-chip">📚 <span id="hero-count">0</span> 本在售</span>
+        <span class="hero-chip">🙏 <span id="hero-wish-count">0</span> 個願望</span>
+      </div>
+      <div class="hero-bubble">今天想找哪本書?</div>
+      <img class="mascot hero-mascot m-bob" src="char-stand.png" alt="" >
+      <h2 id="hero-title">找到你的<br class="sm:hidden">下一本書</h2>
+      <p id="hero-sub" class="sub">學長姐的二手教科書,面交或寄送,在站內安心聊聊。</p>
+      <label class="searchbox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="search" placeholder="搜尋書名、課程、老師、系所" autocomplete="off">
+      </label>
+    </section>
+
+    <button id="btn-zone" class="btn btn-ghost btn-block zone-btn">📚 教材專區:依學期、系所、課程找書</button>
+
+    <!-- 桌面分頁 -->
+    <div class="hidden sm:flex items-center justify-between mt-6 mb-1">
+      <div class="tabs">
+        <button data-tab="books"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>二手書</button>
+        <button data-tab="wishes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/></svg>許願池</button>
+        <button data-tab="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2A8.4 8.4 0 1 1 21 11.5z"/></svg>聊聊<span id="chat-badge" class="badge hidden"></span></button>
+        <button data-tab="mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>我的</button>
+      </div>
+      <button id="btn-wish" class="hidden btn btn-ghost">✨ 我要許願</button>
+    </div>
+
+    <!-- 二手書 -->
+    <div id="view-books">
+      <select id="dept-filter" class="field mb-2" aria-label="依系所找書"></select>
+      <div id="recent-box" class="hidden recent"></div>
+      <details id="adv-box" class="adv">
+        <summary>🔎 進階篩選(價格、書況)</summary>
+        <div class="adv-grid">
+          <input id="adv-min" type="number" inputmode="numeric" min="0" class="field" placeholder="最低價 NT$">
+          <input id="adv-max" type="number" inputmode="numeric" min="0" class="field" placeholder="最高價 NT$">
+          <select id="adv-cond" class="field"><option value="">所有書況</option><option value="全新">全新</option><option value="近全新">近全新</option><option value="有些許使用痕跡">有些許使用痕跡</option><option value="有筆記或畫線">有筆記或畫線</option><option value="有缺頁或汙損">有缺頁或汙損</option></select>
+          <button id="adv-clear" type="button" class="btn btn-ghost btn-sm">清除篩選</button>
+        </div>
+      </details>
+      <div id="chips" class="chips"></div>
+      <div class="flex items-center justify-between gap-2 mb-1 mt-1">
+        <p id="count-books" class="text-xs font-semibold" style="color:var(--muted)"></p>
+        <button id="btn-demo-books" class="hidden btn btn-ghost btn-sm">🧪 加入示範書</button>
+      </div>
+      <div id="grid" class="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-4"></div>
+      <nav id="pager" class="hidden pager" aria-label="分頁"></nav>
+      <button id="btn-sold" class="hidden btn btn-ghost btn-block btn-sm" style="margin-top:14px"></button>
+      <div id="empty" class="hidden empty">
+        <div class="ico"><img class="mascot m-bob" src="char-lie.png" alt="" ></div>
+        <h3>找不到符合的書</h3>
+        <p class="text-sm mb-5">換個關鍵字,或許個願,有同學有書會跟你聊聊!</p>
+        <button id="btn-wish-empty" class="btn btn-primary">🙏 找不到?去許願</button>
+      </div>
+    </div>
+
+    <!-- 許願池 -->
+    <div id="view-wishes" class="hidden">
+      <p id="count-wishes" class="text-xs font-semibold mb-3 mt-4" style="color:var(--muted)"></p>
+      <div id="wish-grid" class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></div>
+      <div id="wish-empty" class="hidden empty">
+        <div class="ico"><img class="mascot m-bob" src="char-lie.png" alt="" ></div>
+        <h3>還沒有人許願</h3>
+        <p class="text-sm">想買的書找不到?按右下角「許願」,讓有書的同學找到你</p>
+      </div>
+    </div>
+
+    <!-- 聊聊 -->
+    <div id="view-chat" class="hidden pt-5">
+      <div id="support-bar" class="mb-3"><button id="btn-support" class="btn btn-ghost btn-block btn-sm">💬 有問題?聯絡管理員</button></div>
+      <div id="thread-list" class="space-y-3"></div>
+      <div id="thread-empty" class="hidden empty">
+        <div class="ico"><img class="mascot m-bob" src="char-lie.png" alt="" ></div>
+        <h3>還沒有聊聊</h3>
+        <p class="text-sm">在書上按「我想買」,或在許願池按「我有這本書」,就會開始聊聊</p>
+      </div>
+      <div id="chat-panel" class="hidden panel" style="height:calc(100vh - 190px);min-height:460px">
+        <div class="panel-head">
+          <button id="chat-back" class="btn btn-ghost !p-2 !rounded-full" aria-label="返回"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="flex-1 min-w-0">
+            <div id="chat-title" class="font-extrabold truncate"></div>
+            <div id="chat-sub" class="text-xs truncate" style="color:var(--muted)"></div>
+          </div>
+          <button data-refresh class="btn btn-ghost !p-2" aria-label="重新整理" title="重新整理"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+          <span id="chat-status" class="pill"></span>
+        </div>
+        <div id="chat-book" class="hidden chat-book"></div>
+        <div id="chat-actions" class="hidden px-4 py-2.5 flex flex-wrap gap-2" style="border-bottom:1px solid var(--line)"></div>
+        <div id="chat-msgs" class="chat-msgs"></div>
+        <p class="text-[11px] px-4 pt-2" style="color:var(--muted)">🔒 請勿在聊聊中提供密碼、驗證碼等敏感資料。為處理糾紛與維護安全,管理員可查看交易訊息。</p>
+        <form id="chat-form" class="p-3 flex gap-2 items-center">
+          <input id="chat-input" class="chat-input" maxlength="1000" autocomplete="off" placeholder="輸入訊息…">
+          <button class="btn btn-primary" aria-label="送出"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 我的 -->
+    <div id="view-mine" class="hidden pt-5 space-y-6">
+      <div id="mine-profile"></div>
+      <div id="avatar-picker" class="surface p-4 hidden"></div>
+      <section id="mine-menu"></section>
+      <section id="mine-notify" class="hidden"></section>
+      <section id="mine-ann"></section>
+      <section>
+        <h2 class="h-sec">📖 我上架的書</h2>
+        <div id="mine-books" class="space-y-2.5"></div>
+      </section>
+      <section>
+        <h2 class="h-sec">🙏 我的願望</h2>
+        <div id="mine-wishes" class="space-y-2.5"></div>
+      </section>
+    </div>
+
+    <!-- 載入中(骨架)-->
+    <div id="loading" class="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-3 xl:grid-cols-4 mt-5">
+      <div class="loading-mascot"><img class="mascot m-bob" src="char-sit.png" alt="" width="120">正在翻書⋯</div>
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel hidden md:block"></div>
+    </div>
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-5 pb-32 sm:pb-10 text-xs flex flex-wrap gap-x-4 gap-y-1" style="color:var(--muted)">
+    <a href="terms.html" class="underline">使用條款 / 免責聲明 / 隱私權告知</a>
+    <span>校徽 © 國立臺北護理健康大學</span>
+    <span>角色圖案 © SANRIO,僅作校內非營利專題示範使用</span>
+    <a id="footer-oa" href="#" target="_blank" rel="noopener" class="hidden underline">加入 LINE 官方帳號</a>
+    <span>本平台僅提供資訊媒合,不經手金流、不擔保交易。</span>
+  </footer>
+
+  <!-- 登入 -->
+  <div id="modal-login" class="hidden overlay z-50">
+    <div class="sheet text-center space-y-3" style="max-width:400px">
+      <div class="mx-auto" style="width:150px"><img class="mascot m-bob" src="char-stand.png" alt="" width="150"></div>
+      <h2 class="title">登入 / 註冊</h2>
+      <p class="text-sm" style="color:var(--muted)">用 LINE 登入後才能上架、許願與聊聊。<br>我們只取得你的 <b>LINE 暱稱</b>(不儲存頭像),不會加你好友,也不會公開你的 LINE ID。</p>
+      <div class="text-left text-sm rounded-2xl p-3" style="background:var(--surface-2)"><div class="font-extrabold mb-1">只有北護在校生可以使用</div>
+        <ol style="margin-left:1.2em;list-style:decimal"><li>用 LINE 登入(LINE 會用手機的 Face ID 驗證)</li><li>填基本資料、設定暱稱</li><li>要買書、賣書、聊聊時,再用學生證完成學校認證</li></ol></div>
+      <button id="btn-login-go" class="btn btn-line btn-block !py-3">用 LINE 登入 / 註冊</button>
+      <div class="or-line"><span>或</span></div>
+      <form id="form-pwlogin" class="space-y-2 text-left" autocomplete="on">
+        <p class="hint" style="margin:0">已完成學校認證並設定過登入帳號的同學,可以直接用 Email 登入(手機可用 Face ID 自動填入密碼)。</p>
+        <input id="pw-email" name="username" type="email" class="field" autocomplete="username" inputmode="email" placeholder="Email" required>
+        <input id="pw-pass" name="password" type="password" class="field" autocomplete="current-password" placeholder="密碼" required>
+        <p id="pw-error" class="hidden text-sm" style="color:#b86f6f"></p>
+        <button id="btn-pw-go" class="btn btn-primary btn-block">用 Email 登入</button>
+      </form>
+      <button id="btn-code-toggle" class="btn btn-ghost btn-block btn-sm">已在 Safari 登入?輸入登入碼</button>
+      <div id="code-box" class="hidden space-y-2">
+        <input id="code-input" class="field text-center" maxlength="7" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="6 位數字">
+        <button id="btn-code-go" class="btn btn-primary btn-block">用登入碼登入</button>
+        <p class="hint">在 Safari 登入後,到「我的」按「產生登入碼」。</p>
+      </div>
+      <p class="hint">為了安全,登入後 3 天內免重新登入,超過 3 天需要重新登入。</p>
+      <button data-close-login class="btn btn-ghost btn-block">先逛逛</button>
+    </div>
+  </div>
+
+  <!-- 認證成功後:設定自己的登入帳號(Email + 密碼) -->
+  <div id="modal-cred" class="hidden overlay z-50">
+    <form id="form-cred" class="sheet space-y-3" style="max-width:400px" autocomplete="on">
+      <h2 class="title">設定你的登入帳號</h2>
+      <p class="text-sm" style="color:var(--muted)">學校認證完成了!請輸入你想使用的 <b>Email</b> 並設定密碼,之後可以直接用 Email 登入,手機也能用 Face ID 自動填入。這個 Email 只用來登入,不會公開。</p>
+      <input id="cred-email" name="username" type="email" class="field" autocomplete="username" inputmode="email" placeholder="你想用的 Email" required>
+      <input id="cred-pass" name="password" type="password" class="field" autocomplete="new-password" minlength="8" maxlength="72" placeholder="密碼(至少 8 碼,要有英文和數字)" required>
+      <input id="cred-pass2" type="password" class="field" autocomplete="new-password" minlength="8" maxlength="72" placeholder="再輸入一次密碼" required>
+      <p id="cred-error" class="hidden text-sm" style="color:#b86f6f"></p>
+      <button id="btn-cred-go" class="btn btn-primary btn-block !py-3">儲存登入帳號</button>
+      <button type="button" data-close-cred class="btn btn-ghost btn-block">稍後再設定</button>
+    </form>
+  </div>
+
+  <!-- 通知中心 -->
+  <div id="modal-notif" class="hidden overlay z-50">
+    <div class="sheet space-y-3" style="max-width:480px">
+      <div class="flex items-center justify-between gap-2"><h2 class="title">🔔 通知中心</h2>
+        <div class="flex items-center gap-2"><button id="btn-notif-readall" class="btn btn-ghost btn-sm">全部已讀</button><button type="button" data-close-notif class="x">&times;</button></div></div>
+      <div id="notif-list" class="space-y-2"></div>
+      <details class="adv"><summary>通知設定(個別開關)</summary>
+        <div id="notif-prefs" class="space-y-2 mt-2">
+          <label class="pref"><input type="checkbox" data-pref="price_drop"> 收藏的書降價</label>
+          <label class="pref"><input type="checkbox" data-pref="wish_match"> 許願的書有人上架</label>
+          <label class="pref"><input type="checkbox" data-pref="trade"> 交易進度(有人想買、確認、完成、取消)</label>
+          <label class="pref"><input type="checkbox" data-pref="dispute"> 交易爭議的處理進度</label>
+        </div></details>
+    </div>
+  </div>
+
+  <!-- 教材專區 -->
+  <div id="modal-zone" class="hidden overlay z-50">
+    <div class="sheet space-y-3" style="max-width:560px">
+      <div class="flex items-center justify-between"><h2 class="title">📚 教材專區</h2><button type="button" data-close-zone class="x">&times;</button></div>
+      <p class="hint">依學期與系所,看每門課指定的教材,以及目前有幾本在賣。</p>
+      <div class="grid grid-cols-2 gap-2"><select id="zone-sem" class="field"></select><select id="zone-dept" class="field"></select></div>
+      <div id="zone-list" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- 交易爭議 -->
+  <div id="modal-dispute" class="hidden overlay z-50">
+    <form id="form-dispute" class="sheet space-y-4" style="max-width:420px">
+      <div class="flex items-center justify-between"><h2 class="title">⚖️ 交易爭議</h2><button type="button" data-close-dispute class="x">&times;</button></div>
+      <p class="text-sm" style="color:var(--muted)">交易有問題、跟對方談不攏時,可以送給管理員協助處理。管理員處理的進度會通知你。</p>
+      <label class="block"><span class="label">爭議類型 <span class="req">*</span></span>
+        <select name="reason" required class="field">
+          <option value="no_show">對方沒有出現 / 沒有回應</option><option value="condition">書況與描述不符</option>
+          <option value="price">價格或運費爭議</option><option value="harassment">騷擾或不當言論</option><option value="other">其他</option>
+        </select></label>
+      <label class="block"><span class="label">發生什麼事?</span><textarea name="detail" rows="4" maxlength="500" class="field" placeholder="請簡單說明經過(日期、約定內容等)"></textarea></label>
+      <p id="dispute-error" class="hidden err"></p>
+      <div class="flex gap-2.5"><button type="button" data-close-dispute class="btn btn-ghost flex-1">取消</button><button type="submit" class="btn btn-primary flex-1">送出爭議</button></div>
+    </form>
+  </div>
+
+  <!-- 我的收藏 -->
+  <div id="modal-favs" class="hidden overlay z-50">
+    <div class="sheet space-y-3" style="max-width:480px">
+      <div class="flex items-center justify-between"><h2 class="title">♥ 我的收藏</h2><button type="button" data-close-favs class="x">&times;</button></div>
+      <p class="hint">收藏的書降價時,這裡會標出來,登入時也會提醒你。</p>
+      <div id="favs-list" class="space-y-2.5"></div>
+    </div>
+  </div>
+
+  <!-- 賣家個人頁 -->
+  <div id="modal-seller" class="hidden overlay z-50">
+    <div class="sheet space-y-3" style="max-width:480px">
+      <div class="flex items-center justify-between"><h2 class="title">賣家資料</h2><button type="button" data-close-seller class="x">&times;</button></div>
+      <div id="seller-body" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- 交易紀錄 -->
+  <div id="modal-trades" class="hidden overlay z-50">
+    <div class="sheet space-y-3" style="max-width:520px">
+      <div class="flex items-center justify-between"><h2 class="title">🧾 交易紀錄</h2><button type="button" data-close-trades class="x">&times;</button></div>
+      <div class="seg" id="trade-seg"><button data-trade-tab="buy" class="on">我買的</button><button data-trade-tab="sell">我賣的</button></div>
+      <div id="trade-body" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- 註冊第一步:基本資料 -->
+  <div id="modal-basic" class="hidden vfpage">
+    <form id="form-basic" class="vf-wrap">
+      <header class="vf-head">
+        <button type="button" id="btn-basic-close" class="vf-x" aria-label="關閉">✕</button>
+        <h2>註冊:基本資料</h2><span style="width:36px"></span>
+      </header>
+      <div class="vf-body">
+        <p class="vf-hint" style="margin-top:14px">歡迎!請先填寫基本資料。之後要買書、賣書或聊聊時,再到「我的」完成學校認證(上傳學生證),管理員會用這些資料核對你的身分。</p>
+
+        <div class="vf-step">STEP 1. 姓名</div>
+        <label class="vf-input"><span>👤</span>
+          <input id="basic-name" maxlength="20" placeholder="真實姓名(需與學生證相同)" autocomplete="name"></label>
+
+        <div class="vf-step">STEP 2. 科系</div>
+        <label class="vf-input"><span>🏫</span>
+          <select id="basic-dept"></select></label>
+
+        <div class="vf-step">STEP 3. 入學年度(民國)</div>
+        <label class="vf-input"><span>📅</span>
+          <select id="basic-year"></select></label>
+        <p class="vf-hint">例如 2024 年 9 月入學,就是民國 113 年。</p>
+
+        <div class="vf-notes">
+          <p class="vf-note-title">注意事項</p>
+          <ul>
+            <li>姓名、科系、入學年度<b>只有管理員看得到</b>,用來核對學生證,不會公開,也不會顯示給其他同學。</li>
+            <li>其他同學看到的只有你之後設定的<b>暱稱</b>。</li>
+            <li>資料請如實填寫,必須與學生證一致,否則會被退回。</li>
+          </ul>
+        </div>
+        <p id="basic-error" class="hidden err" style="margin-top:10px"></p>
+        <button type="button" id="btn-basic-logout" class="btn btn-ghost btn-block btn-sm" style="margin-top:14px">登出</button>
+        <div style="height:24px"></div>
+      </div>
+      <div class="vf-bar">
+        <button type="submit" id="btn-basic-submit" class="btn btn-primary btn-block" disabled>下一步</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 學校認證(上傳學生證) -->
+  <div id="modal-verify" class="hidden vfpage">
+    <form id="form-verify" class="vf-wrap">
+      <header class="vf-head">
+        <button type="button" id="btn-verify-close" class="vf-x" aria-label="關閉">✕</button>
+        <h2>學校認證</h2><span style="width:36px"></span>
+      </header>
+      <div class="vf-body">
+        <div id="verify-pending" class="hidden vf-card" style="text-align:center">
+          <div style="font-size:42px">⏳</div>
+          <p style="font-weight:800;font-size:17px;margin:6px 0">管理員審核中</p>
+          <p class="vf-hint">已收到你的學生證。審核時間最長約 24 小時(以工作日計算),通過後就能使用。</p>
+          <p class="vf-hint" style="margin-top:8px">學號:<b id="verify-pending-no"></b></p>
+          <button type="button" id="btn-verify-refresh" class="btn btn-primary btn-block" style="margin-top:14px">重新整理狀態</button>
+        </div>
+
+        <div id="verify-form-box">
+          <p class="vf-hint" style="margin:14px 0 0">只有北護在校生可以買書、賣書、許願與聊聊。不認證也可以瀏覽書籍。</p>
+          <p id="verify-rejected" class="hidden err" style="margin-top:12px"></p>
+
+          <div class="vf-step">STEP 1. 確認學號</div>
+          <label class="vf-input"><span>#</span>
+            <input id="verify-no" maxlength="12" placeholder="學號" autocomplete="off" inputmode="text"></label>
+          <p class="vf-hint">若號碼有誤,可在此直接修改後再送出。一個學號只能註冊一次。</p>
+
+          <div class="vf-step">STEP 2. 上傳學生證</div>
+          <label class="vf-upload" for="verify-card">
+            <img id="verify-card-preview" class="hidden" alt="">
+            <div id="verify-card-empty"><div style="font-size:40px">📷</div>請上傳學生證正面照片</div>
+          </label>
+          <input id="verify-card" type="file" accept="image/*" style="display:none">
+
+          <div class="vf-notes">
+            <p class="vf-note-title">注意事項</p>
+            <ul>
+              <li>提交的資料會在完成身分確認後<b>立即刪除</b>,不會公開,也不會顯示給其他同學。</li>
+              <li>學校名稱、學號、姓名必須清楚顯示;身分證字號等無關資料可以遮住。</li>
+              <li>審核時間最長約 24 小時(以工作日計算)。</li>
+              <li>若資料不清楚,申請可能會被退回。</li>
+              <li><b>一個學號只能註冊一次。</b>提供虛偽資訊或冒用他人學號者,帳號將被停權,相關責任由本人承擔。</li>
+            </ul>
+            <label class="vf-agree"><input type="checkbox" id="verify-agree"> <span>我已確認以上資訊正確,且為本人的學號與學生證</span></label>
+          </div>
+          <p id="verify-error" class="hidden err" style="margin-top:10px"></p>
+          <button type="button" id="btn-verify-logout" class="btn btn-ghost btn-block btn-sm" style="margin-top:14px">登出</button>
+          <div style="height:24px"></div>
+        </div>
+      </div>
+      <div id="vf-bar" class="vf-bar">
+        <button type="submit" id="btn-verify-submit" class="btn btn-primary btn-block" disabled>送出驗證申請</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 檢舉 -->
+  <div id="modal-report" class="hidden overlay z-50">
+    <form id="form-report" class="sheet space-y-4" style="max-width:420px">
+      <div class="flex items-center justify-between"><h2 class="title">🚩 檢舉</h2><button type="button" data-close-report class="x">&times;</button></div>
+      <p id="report-target" class="text-sm" style="color:var(--muted)"></p>
+      <label class="block"><span class="label">原因 <span class="req">*</span></span>
+        <select name="reason" required class="field">
+          <option value="irrelevant">不是教科書 / 與課程無關</option><option value="fraud">詐騙或不實內容</option>
+          <option value="harassment">騷擾或不當言論</option><option value="illegal">違法或違規內容</option><option value="other">其他</option>
+        </select></label>
+      <label class="block"><span class="label">補充說明(選填)</span><textarea name="detail" rows="3" maxlength="300" class="field"></textarea></label>
+      <p id="report-error" class="hidden err"></p>
+      <div class="flex gap-2.5"><button type="button" data-close-report class="btn btn-ghost flex-1">取消</button><button type="submit" class="btn btn-primary flex-1">送出檢舉</button></div>
+      <p class="hint">檢舉會送到管理員,不會讓被檢舉的人知道是誰檢舉的。</p>
+    </form>
+  </div>
+
+  <!-- 評價賣家 -->
+  <div id="modal-rate" class="hidden overlay z-50">
+    <form id="form-rate" class="sheet space-y-4" style="max-width:400px">
+      <div class="flex items-center justify-between"><h2 class="title">⭐ 給賣家評價</h2><button type="button" data-close-rate class="x">&times;</button></div>
+      <p class="text-sm" style="color:var(--muted)">交易完成了!你對這位賣家滿意嗎?評價會成為其他同學參考的「賣家信用」,不會顯示你是誰。</p>
+      <div id="rate-stars" class="flex justify-center gap-2" style="font-size:46px;line-height:1">
+        <button type="button" data-star="1" aria-label="1 顆星">☆</button><button type="button" data-star="2" aria-label="2 顆星">☆</button><button type="button" data-star="3" aria-label="3 顆星">☆</button><button type="button" data-star="4" aria-label="4 顆星">☆</button><button type="button" data-star="5" aria-label="5 顆星">☆</button>
+      </div>
+      <input name="comment" maxlength="100" class="field" placeholder="想說的話(選填,只有賣家與管理員看得到)">
+      <p id="rate-error" class="hidden err"></p>
+      <div class="flex gap-2.5"><button type="button" data-close-rate class="btn btn-ghost flex-1">取消</button><button type="submit" class="btn btn-primary flex-1">送出評價</button></div>
+    </form>
+  </div>
+
+  <!-- 被停權 -->
+  <div id="modal-banned" class="hidden overlay z-50">
+    <div class="sheet space-y-3 text-center" style="max-width:400px">
+      <div style="font-size:48px">🚫</div>
+      <h2 class="title">你的帳號已被停權</h2>
+      <p id="banned-reason" class="text-sm"></p>
+      <p class="hint">你已被強制登出。如有疑問,請聯絡管理員。</p>
+      <button id="btn-banned-ok" class="btn btn-primary btn-block">我知道了</button>
+    </div>
+  </div>
+
+  <!-- 購買 -->
+  <div id="modal-buy" class="hidden overlay">
+    <form id="form-buy" class="sheet space-y-4">
+      <div class="flex items-center justify-between"><h2 class="title">我想買</h2><button type="button" data-close-buy class="x">&times;</button></div>
+      <div id="buy-info"></div>
+      <fieldset id="buy-methods" class="space-y-2.5"></fieldset>
+      <p class="hint">送出後會建立聊聊,與賣家討論時間、地點或寄送細節;付款與取貨請在聊聊中與賣家確認。</p>
+      <p id="buy-error" class="hidden err"></p>
+      <div class="flex gap-2.5">
+        <button type="button" data-close-buy class="btn btn-ghost flex-1">取消</button>
+        <button id="btn-buy-submit" type="submit" class="btn btn-primary flex-1">開始聊聊</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 同意書 -->
+  <div id="modal-consent" class="hidden overlay z-[55]">
+    <form id="form-consent" class="sheet" style="max-width:680px;padding:0;display:flex;flex-direction:column;max-height:94dvh;overflow:hidden">
+      <div class="px-5 pt-4 pb-3" style="border-bottom:1px solid var(--line)">
+        <h2 class="title">📜 使用同意書</h2>
+        <p class="hint mt-1">請完整閱讀(捲到最底部)並勾選同意,才能使用上架、許願、購買與聊聊功能。</p>
+      </div>
+      <div id="consent-body" class="flex-1 overflow-y-auto px-5 py-4" style="color:var(--text)"></div>
+      <div class="px-5 py-4 space-y-3" style="border-top:1px solid var(--line)">
+        <label class="flex items-start gap-2.5 text-sm">
+          <input type="checkbox" id="consent-check" class="mt-1 w-4 h-4" style="accent-color:var(--brand-b)" disabled>
+          <span>我已詳細閱讀並了解本同意書全部內容(含免責聲明、<b>違法用途由使用者自行負責</b>、個資告知事項及相關法律條文),並同意遵守。</span>
+        </label>
+        <p id="consent-hint" class="hint" style="color:#c28d4c">請先把上方內容捲動到最底部,才能勾選同意。</p>
+        <p id="consent-error" class="hidden err"></p>
+        <div class="flex gap-2.5">
+          <button type="button" id="consent-decline" class="btn btn-ghost flex-1">不同意並登出</button>
+          <button id="btn-consent-submit" type="submit" disabled class="btn btn-primary flex-1">同意並繼續</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- 使用者資料 -->
+  <div id="modal-profile" class="hidden overlay z-50">
+    <form id="form-profile" class="sheet space-y-4" style="max-width:420px">
+      <div class="flex items-center justify-between"><h2 class="title">完成基本資料</h2><button type="button" id="profile-close" data-close-profile class="hidden x">&times;</button></div>
+      <p id="profile-hint" class="text-sm" style="color:var(--muted)">第一次使用,請先設定暱稱並選擇系所,完成後才能上架、許願與聊聊。</p>
+      <label class="block"><span class="label">暱稱 <span class="req">*</span></span>
+        <input id="profile-name" name="nickname" required maxlength="20" autocomplete="off" class="field" placeholder="1–20 字,別人會看到這個名字"></label>
+      <p class="hint">建議不要用真實姓名,想匿名的話取個別人認不出你的名字。</p>
+      <label class="block"><span class="label">系所 <span class="req">*</span></span>
+        <select id="profile-dept" name="department" required class="field"></select></label>
+      <p class="hint">系所只有你和管理員看得到,不會公開顯示。</p>
+      <p id="profile-error" class="hidden err"></p>
+      <button id="btn-profile-submit" type="submit" class="btn btn-primary btn-block !py-3">儲存</button>
+    </form>
+  </div>
+
+  <!-- 約定面交 -->
+  <div id="modal-meetup" class="hidden overlay">
+    <form id="form-meetup" class="sheet space-y-4">
+      <div class="flex items-center justify-between"><h2 class="title">📍 約定面交</h2><button type="button" data-close-meetup class="x">&times;</button></div>
+      <label class="block"><span class="label">面交地點 <span class="req">*</span></span>
+        <select name="place" id="meetup-place" required class="field"></select></label>
+      <label class="block"><span class="label">面交時間 <span class="req">*</span></span>
+        <input name="time" type="datetime-local" required class="field"></label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block"><span class="label">書況</span><select name="condition" class="field"><option value="">請選擇</option><option value="全新">全新</option><option value="近全新">近全新</option><option value="有些許使用痕跡">有些許使用痕跡</option><option value="有筆記或畫線">有筆記或畫線</option><option value="有缺頁或汙損">有缺頁或汙損</option></select></label>
+        <label class="block"><span class="label">ISBN</span><input name="isbn" maxlength="17" inputmode="numeric" placeholder="書背條碼數字" class="field"></label>
+        <label class="block"><span class="label">出版社</span><input name="publisher" maxlength="40" class="field"></label>
+        <label class="block"><span class="label">版本</span><input name="edition" maxlength="20" placeholder="例:第三版" class="field"></label>
+        <label class="block"><span class="label">出版年份(西元)</span><input name="pub_year" type="number" inputmode="numeric" min="1900" max="2100" placeholder="例:2023" class="field"></label>
+      </div>
+      <label class="block"><span class="label">備註</span>
+        <input name="note" maxlength="100" placeholder="例:我會穿藍色外套" class="field"></label>
+      <p class="hint">送出後會以訊息留在對話中,雙方都看得到;要更改時再送出一次即可。</p>
+      <div class="flex gap-2.5">
+        <button type="button" data-close-meetup class="btn btn-ghost flex-1">取消</button>
+        <button type="submit" class="btn btn-primary flex-1">送到對話</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 上架 -->
+  <div id="modal-sell" class="hidden overlay">
+    <form id="form-sell" class="sheet space-y-4">
+      <div class="flex items-center justify-between"><h2 class="title">📖 上架二手書</h2><button type="button" data-close-sell class="x">&times;</button></div>
+
+      <label class="block"><span class="label">書名 <span class="req">*</span></span>
+        <input name="title" required maxlength="100" class="field" placeholder="例:微積分(第九版)"></label>
+      <label class="block"><span class="label">價格 (NT$) <span class="req">*</span></span>
+        <input name="price" type="number" inputmode="numeric" min="0" max="99999" required class="field" placeholder="例:250"></label>
+      <label class="block"><span class="label">書籍照片 <span class="req">*</span></span>
+        <div id="sell-photos" class="flex flex-wrap gap-2 mb-2"></div>
+        <input name="image" type="file" accept="image/*" multiple class="field !p-2.5 text-sm">
+        <span class="hint">最多 5 張,第一張是封面;會自動壓縮</span></label>
+
+      <fieldset class="box space-y-2.5">
+        <legend>老師名稱或開課系所(至少填一項) <span class="req">*</span></legend>
+        <input name="teacher" maxlength="60" placeholder="老師名稱,例:王小明老師" class="field">
+        <select id="sell-dept" name="course_dept" class="field"></select>
+      </fieldset>
+
+      <fieldset class="box space-y-2.5">
+        <legend>交易方式(至少選一種) <span class="req">*</span></legend>
+        <label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="allow_meetup" checked style="accent-color:var(--brand-b);width:18px;height:18px"> 🤝 面交</label>
+        <select name="meetup_place" id="sell-place" class="field"></select>
+        <span class="hint">面交地點只能從清單選擇(為了雙方的安全)</span>
+        <label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="allow_shipping" style="accent-color:var(--brand-b);width:18px;height:18px"> 📦 寄送</label>
+        <input name="shipping_fee" type="number" inputmode="numeric" min="0" max="9999" placeholder="運費 NT$(選填,0 = 免運)" class="field">
+      </fieldset>
+
+      <p class="hint pt-1" style="border-top:1px dashed var(--line);padding-top:12px">以下為選填</p>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block"><span class="label">課程名稱</span><input name="course" maxlength="60" placeholder="例:微積分" class="field"></label>
+        <label class="block"><span class="label">作者</span><input name="author" maxlength="60" class="field"></label>
+      </div>
+      <label class="block"><span class="label">備註</span>
+        <textarea name="note" rows="2" maxlength="200" placeholder="例:附解答" class="field"></textarea></label>
+      <input name="website" tabindex="-1" autocomplete="off" class="hidden">
+
+      <p id="form-error" class="hidden err"></p>
+      <div class="flex gap-2.5">
+        <button type="button" data-close-sell class="btn btn-ghost flex-1">取消</button>
+        <button id="btn-submit" type="submit" class="btn btn-primary flex-1">送出上架</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 看照片 -->
+  <div id="modal-photos" class="hidden overlay z-50">
+    <div class="sheet space-y-3" style="max-width:520px">
+      <div class="flex items-center justify-between"><h2 id="photos-title" class="title truncate">照片</h2><button type="button" data-close-photos class="x">&times;</button></div>
+      <div id="photos-strip" class="flex gap-3 overflow-x-auto pb-2" style="scroll-snap-type:x mandatory"></div>
+      <p id="photos-hint" class="hint text-center">左右滑動看更多照片</p>
+      <div id="detail-body" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- 許願 -->
+  <div id="modal-wish" class="hidden overlay">
+    <form id="form-wish" class="sheet space-y-4">
+      <div class="flex items-center justify-between"><h2 class="title">🙏 許願想買的書</h2><button type="button" data-close-wish class="x">&times;</button></div>
+      <label class="block"><span class="label">想買的書名 <span class="req">*</span></span>
+        <input name="title" required maxlength="100" class="field" placeholder="例:普通物理學(上)"></label>
+      <p class="hint" style="border-top:1px dashed var(--line);padding-top:12px">以下為選填(有同學有書時,會在站內跟你聊聊)</p>
+      <label class="block"><span class="label">參考照片(書的封面或課表)</span>
+        <input name="image" type="file" accept="image/*" class="field !p-2.5 text-sm"></label>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="block"><span class="label">課程名稱</span><input name="course" maxlength="60" placeholder="例:微積分" class="field"></label>
+        <label class="block"><span class="label">預算 (NT$)</span><input name="budget" type="number" inputmode="numeric" min="0" max="99999" class="field"></label>
+      </div>
+      <label class="block"><span class="label">備註</span>
+        <textarea name="note" rows="2" maxlength="200" placeholder="例:版本不拘、可接受有筆記" class="field"></textarea></label>
+      <input name="website" tabindex="-1" autocomplete="off" class="hidden">
+      <p id="wish-error" class="hidden err"></p>
+      <div class="flex gap-2.5">
+        <button type="button" data-close-wish class="btn btn-ghost flex-1">取消</button>
+        <button id="btn-wish-submit" type="submit" class="btn btn-primary flex-1">送出許願</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 手機:浮動底部導覽 + 浮動按鈕 -->
+  <nav id="bottom-nav" class="sm:hidden dock">
+    <button data-nav="books"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>二手書</button>
+    <button data-nav="wishes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 2l2.9 6.9L22 10l-5.5 4.8L18 22l-6-3.6L6 22l1.5-7.2L2 10l7.1-1.1z"/></svg>許願池</button>
+    <button data-nav="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2A8.4 8.4 0 1 1 21 11.5z"/></svg>聊聊<span id="nav-badge" class="badge hidden"></span></button>
+    <button data-nav="mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>我的</button>
+  </nav>
+  <button id="fab" class="sm:hidden hidden fab"></button>
+
+  <div id="toast" class="hidden toast"></div>
+
+  <script src="config.js"></script>
+  <script src="departments.js"></script>
+  <script src="terms.js"></script>
+  <script src="api.js"></script>
+  <button id="btn-top" class="to-top hidden" aria-label="回到最上面">↑</button>
+  <script src="fx.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

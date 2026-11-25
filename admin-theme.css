@@ -1,0 +1,48 @@
+/* 後台:套用淺藍可愛風(覆蓋 Tailwind 的灰階配色)*/
+:root { --bg: #dbe3ea; --text: #6d5b58; --muted: #8a7873; --line: #d6c8c2; --line-d: #bca8a2; --brand: #6f97b2; --deep: #557f9b; --sun: #f0dcbd; }
+body { font-family: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif !important; background-color: var(--bg) !important; color: var(--text) !important;
+   }
+header.bg-slate-900 { background: #fff !important; color: var(--deep) !important; border-bottom: 2px solid var(--line); }
+header .text-slate-300 { color: var(--muted) !important; }
+header h1 { display: flex; align-items: center; gap: 8px; color: var(--deep); font-size: 18px; }
+header h1 svg { width: 38px; height: 38px; }
+.bg-white { background: #fff !important; border: 2px solid var(--line); border-radius: 22px !important; box-shadow: 0 3px 0 rgba(188, 168, 162, .35); }
+table.w-full { border-collapse: separate; }
+.bg-slate-50 { background: #e9eef2 !important; }
+.bg-slate-100 { background: var(--bg) !important; }
+.border-slate-200, .border-slate-300, .border-slate-100, .divide-slate-100 > * { border-color: var(--line) !important; }
+.text-slate-500, .text-slate-600, .text-slate-400 { color: var(--muted) !important; }
+.text-slate-700, .text-slate-800 { color: var(--text) !important; }
+#tabs { border-bottom: 2px dotted var(--line) !important; gap: 6px !important; padding-bottom: 6px; }
+#tabs button { border-radius: 999px !important; border: 2.5px solid transparent !important; font-weight: 700 !important; padding: 6px 16px !important; }
+#tabs button.border-blue-500 { background: var(--brand); color: #fff !important; border-color: var(--deep) !important; box-shadow: 0 3px 0 var(--deep); }
+#tabs button.border-transparent:hover { background: #fff; border-color: var(--line) !important; }
+.bg-blue-500, .bg-slate-800 { background: var(--brand) !important; border: 2.5px solid var(--deep); box-shadow: 0 4px 0 var(--deep); color: #fff !important; }
+.bg-blue-500:active, .bg-slate-800:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--deep); }
+button.rounded, button.rounded-lg, button.rounded-full { border-width: 2.5px; }
+button.border-slate-300 { background: #fff; border-color: var(--line) !important; box-shadow: 0 2px 0 var(--line); }
+button.border-slate-300:hover { border-color: var(--brand) !important; }
+button.border-red-300 { background: #fff; box-shadow: 0 2px 0 #e3c5c1; }
+button.border-emerald-400 { background: #fff; box-shadow: 0 2px 0 #a9c9b6; }
+input, textarea, select { border: 2px solid var(--line) !important; border-radius: 14px !important; background: #fff; color: var(--text); }
+input:focus, textarea:focus, select:focus { outline: 0; border-color: var(--brand) !important; box-shadow: 0 0 0 4px rgba(111, 151, 178, .22); }
+#gate { margin-top: 40px; }
+#gate h2 { color: var(--deep); font-size: 22px; }
+#toast { background: #fff !important; color: var(--text) !important; border: 3px solid var(--line-d); box-shadow: 0 4px 0 var(--line-d); font-weight: 700; animation: toastIn .4s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px) scale(.85); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+tbody tr { transition: background .15s; }
+tbody tr:hover { background: #f4efeb; }
+#panel > * { animation: fadeUp .35s both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.mascot { overflow: visible; display: block; }
+.m-bob { animation: bob 3.2s ease-in-out infinite; }
+.m-eye { transform-box: fill-box; transform-origin: center; animation: blink 4.6s infinite; }
+.m-arm { transform-box: fill-box; transform-origin: 100% 100%; animation: wave 2.4s ease-in-out infinite; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+@keyframes wave { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-24deg); } 80% { transform: rotate(6deg); } 90% { transform: rotate(-20deg); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+header h1 img { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--line); background: #fff; }
+
+header h1 img { border: 0 !important; background: transparent !important; }
